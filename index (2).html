@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Scheduling Program</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f1f4f9;
+            margin: 0;
+            padding: 30px 15px;
+            color: #222;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #243b64;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: #243b64;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            padding: 11px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            margin: 5px 3px;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .btn-start {
+            background: #243b64;
+        }
+
+        .btn-fcfs {
+            background: #2878c8;
+        }
+
+        .btn-sjf {
+            background: #229b72;
+        }
+
+        .btn-rr {
+            background: #e58b27;
+        }
+
+        .btn-reset {
+            background: #d94343;
+        }
+
+        .algorithm-section {
+            margin-top: 25px;
+            padding: 18px;
+            background: #f7f9fc;
+            border-radius: 8px;
+        }
+
+        .buttons {
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #243b64;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f2f5f9;
+        }
+
+        .result-card {
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #dce2eb;
+            border-left: 5px solid #2878c8;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .average {
+            margin-top: 15px;
+            font-weight: bold;
+            line-height: 1.8;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #processInputs {
+            margin-top: 15px;
+        }
+
+        .process-input {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .process-input label {
+            width: 60px;
+            margin: 0;
+        }
+
+        .process-input input {
+            flex: 1;
+        }
+
+        .message {
+            color: #d94343;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 7px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>CPU SCHEDULING PROGRAM</h1>
+
+    <!-- INPUT PROSES -->
+    <div id="inputSection">
+
+        <div class="input-group">
+            <label>Masukkan Jumlah Proses:</label>
+            <input type="number" id="jumlahProses"
+                   min="1" placeholder="Contoh: 3">
+        </div>
+
+        <button class="btn-start" onclick="buatInputProses()">
+            Masukkan Burst Time
+        </button>
+
+        <div id="processInputs"></div>
+
+        <button id="btnMulai" class="btn-start hidden"
+                onclick="mulaiProgram()">
+            Mulai Program
+        </button>
+
+        <p id="errorInput" class="message"></p>
+
+    </div>
+
+    <!-- MENU ALGORITMA -->
+    <div id="menuSection" class="algorithm-section hidden">
+
+        <h2>Pilih Algoritma Penjadwalan</h2>
+
+        <div class="buttons">
+            <button class="btn-fcfs" onclick="jalankanFCFS()">
+                1. FCFS
+            </button>
+
+            <button class="btn-sjf" onclick="jalankanSJF()">
+                2. SJF
+            </button>
+
+            <button class="btn-rr" onclick="tampilkanQuantum()">
+                3. Round Robin
+            </button>
+
+            <button class="btn-reset" onclick="resetProgram()">
+                0. Reset / Exit
+            </button>
+        </div>
+
+        <div id="quantumSection" class="hidden">
+            <label>Masukkan Time Quantum:</label>
+            <input type="number" id="quantum"
+                   min="1" placeholder="Contoh: 2">
+
+            <button class="btn-rr" onclick="jalankanRR()">
+                Jalankan Round Robin
+            </button>
+        </div>
+
+    </div>
+
+    <!-- SEMUA HASIL -->
+    <div id="result"></div>
+
+</div>
+
+<script>
+
+    let jumlahProses = 0;
+    let namaProses = [];
+    let burstTime = [];
+
+    // MEMBUAT INPUT BURST TIME
+    function buatInputProses() {
+
+        const jumlah = parseInt(
+            document.getElementById("jumlahProses").value
+        );
+
+        const area = document.getElementById("processInputs");
+        const error = document.getElementById("errorInput");
+
+        area.innerHTML = "";
+        error.innerHTML = "";
+
+        if (isNaN(jumlah) || jumlah <= 0) {
+            error.innerHTML = "Jumlah proses harus lebih dari 0!";
+            return;
+        }
+
+        jumlahProses = jumlah;
+
+        for (let i = 0; i < jumlahProses; i++) {
+
+            area.innerHTML += `
+                <div class="process-input">
+                    <label>P${i + 1}</label>
+                    <input type="number"
+                           id="bt${i}"
+                           min="1"
+                           placeholder="Masukkan Burst Time">
+                </div>
+            `;
+        }
+
+        document.getElementById("btnMulai")
+                .classList.remove("hidden");
+    }
+
+
+    // MEMULAI PROGRAM
+    function mulaiProgram() {
+
+        namaProses = [];
+        burstTime = [];
+
+        const error = document.getElementById("errorInput");
+        error.innerHTML = "";
+
+        for (let i = 0; i < jumlahProses; i++) {
+
+            let bt = parseInt(
+                document.getElementById("bt" + i).value
+            );
+
+            if (isNaN(bt) || bt <= 0) {
+                error.innerHTML =
+                    "Burst Time semua proses harus lebih dari 0!";
+                return;
+            }
+
+            namaProses.push("P" + (i + 1));
+            burstTime.push(bt);
+        }
+
+        document.getElementById("inputSection")
+                .classList.add("hidden");
+
+        document.getElementById("menuSection")
+                .classList.remove("hidden");
+    }
+
+
+    // MENAMPILKAN HASIL
+    function tampilkanHasil(namaAlgoritma, hasil) {
+
+        let totalWT = 0;
+        let totalTAT = 0;
+
+        let baris = "";
+
+        hasil.forEach(p => {
+
+            totalWT += p.wt;
+            totalTAT += p.tat;
+
+            baris += `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.bt}</td>
+                    <td>${p.ct}</td>
+                    <td>${p.wt}</td>
+                    <td>${p.tat}</td>
+                </tr>
+            `;
+        });
+
+        const rataWT = totalWT / hasil.length;
+        const rataTAT = totalTAT / hasil.length;
+
+        const result = document.getElementById("result");
+
+        // Menggunakan += agar hasil sebelumnya tidak hilang
+        result.innerHTML += `
+            <div class="result-card">
+
+                <h2>Hasil ${namaAlgoritma}</h2>
+
+                <table>
+                    <tr>
+                        <th>Process</th>
+                        <th>BT</th>
+                        <th>CT</th>
+                        <th>WT</th>
+                        <th>TAT</th>
+                    </tr>
+
+                    ${baris}
+
+                </table>
+
+                <div class="average">
+                    Average Waiting Time:
+                    ${rataWT.toFixed(2)}
+                    <br>
+
+                    Average Turnaround Time:
+                    ${rataTAT.toFixed(2)}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    // 1. FCFS
+    function jalankanFCFS() {
+
+        let hasil = [];
+        let currentTime = 0;
+
+        for (let i = 0; i < jumlahProses; i++) {
+
+            let ct = currentTime + burstTime[i];
+            let tat = ct;
+            let wt = tat - burstTime[i];
+
+            hasil.push({
+                name: namaProses[i],
+                bt: burstTime[i],
+                ct: ct,
+                wt: wt,
+                tat: tat
+            });
+
+            currentTime = ct;
+        }
+
+        tampilkanHasil("FCFS", hasil);
+    }
+
+
+    // 2. SJF NON-PREEMPTIVE
+    function jalankanSJF() {
+
+        let proses = [];
+
+        for (let i = 0; i < jumlahProses; i++) {
+
+            proses.push({
+                name: namaProses[i],
+                bt: burstTime[i]
+            });
+        }
+
+        // Mengurutkan berdasarkan Burst Time terkecil
+        proses.sort((a, b) => a.bt - b.bt);
+
+        let hasil = [];
+        let currentTime = 0;
+
+        for (let i = 0; i < proses.length; i++) {
+
+            let ct = currentTime + proses[i].bt;
+            let tat = ct;
+            let wt = tat - proses[i].bt;
+
+            hasil.push({
+                name: proses[i].name,
+                bt: proses[i].bt,
+                ct: ct,
+                wt: wt,
+                tat: tat
+            });
+
+            currentTime = ct;
+        }
+
+        tampilkanHasil("SJF", hasil);
+    }
+
+
+    // 3. MENAMPILKAN INPUT QUANTUM
+    function tampilkanQuantum() {
+
+        document.getElementById("quantumSection")
+                .classList.remove("hidden");
+    }
+
+
+    // 3. ROUND ROBIN
+    function jalankanRR() {
+
+        let quantum = parseInt(
+            document.getElementById("quantum").value
+        );
+
+        if (isNaN(quantum) || quantum <= 0) {
+            alert("Time Quantum harus lebih dari 0!");
+            return;
+        }
+
+        let sisaBT = [...burstTime];
+        let completionTime = Array(jumlahProses).fill(0);
+
+        let currentTime = 0;
+        let selesai = false;
+
+        while (!selesai) {
+
+            selesai = true;
+
+            for (let i = 0; i < jumlahProses; i++) {
+
+                if (sisaBT[i] > 0) {
+
+                    selesai = false;
+
+                    if (sisaBT[i] > quantum) {
+
+                        currentTime += quantum;
+                        sisaBT[i] -= quantum;
+
+                    } else {
+
+                        currentTime += sisaBT[i];
+
+                        sisaBT[i] = 0;
+
+                        completionTime[i] = currentTime;
+                    }
+                }
+            }
+        }
+
+        let hasil = [];
+
+        for (let i = 0; i < jumlahProses; i++) {
+
+            let ct = completionTime[i];
+            let tat = ct;
+            let wt = tat - burstTime[i];
+
+            hasil.push({
+                name: namaProses[i],
+                bt: burstTime[i],
+                ct: ct,
+                wt: wt,
+                tat: tat
+            });
+        }
+
+        tampilkanHasil("Round Robin", hasil);
+    }
+
+
+    // RESET / EXIT
+    function resetProgram() {
+
+        let konfirmasi = confirm(
+            "Apakah kamu yakin ingin menghapus semua hasil dan memulai ulang?"
+        );
+
+        if (konfirmasi) {
+
+            jumlahProses = 0;
+            namaProses = [];
+            burstTime = [];
+
+            document.getElementById("jumlahProses").value = "";
+            document.getElementById("processInputs").innerHTML = "";
+            document.getElementById("result").innerHTML = "";
+            document.getElementById("errorInput").innerHTML = "";
+            document.getElementById("quantum").value = "";
+
+            document.getElementById("inputSection")
+                    .classList.remove("hidden");
+
+            document.getElementById("menuSection")
+                    .classList.add("hidden");
+
+            document.getElementById("quantumSection")
+                    .classList.add("hidden");
+
+            document.getElementById("btnMulai")
+                    .classList.add("hidden");
+        }
+    }
+
+</script>
+
+</body>
+</html>
